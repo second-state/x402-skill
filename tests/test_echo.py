@@ -23,13 +23,14 @@ async def test_echo_without_payment_returns_402(client):
 
 
 @pytest.mark.anyio
-async def test_echo_with_payment_header_returns_body(client):
+async def test_echo_with_invalid_payment_header_returns_400(client):
+    """Test that an invalid (non-base64) payment header returns 400."""
     response = await client.post(
         "/echo",
         json={"hello": "world"},
         headers={"X-Payment": "mock-payment-token"},
     )
-    assert response.status_code == 200
+    assert response.status_code == 400
     data = response.json()
-    assert data["echo"] == {"hello": "world"}
-    assert data["paid"] is True
+    assert "error" in data
+    assert "Invalid payment header" in data["error"]
