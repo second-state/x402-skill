@@ -6,9 +6,8 @@ from fastapi.responses import JSONResponse
 
 from x402 import (
     FacilitatorConfig,
-    PaymentRequired,
-    PaymentRequirements,
-    X402_VERSION,
+    PaymentRequiredV1,
+    PaymentRequirementsV1,
     x402ResourceServer,
 )
 from x402.http import HTTPFacilitatorClient, decode_payment_signature_header
@@ -22,6 +21,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
+# Network name for V1 format (x402-rs compatible)
 NETWORK = "base-sepolia"
 FACILITATOR_URL = "https://x402f1.secondstate.io"
 
@@ -45,30 +45,37 @@ server = x402ResourceServer(facilitator)
 server.register(NETWORK, ExactEvmServerScheme())
 
 
-def build_payment_requirements() -> list[PaymentRequirements]:
-    """Build payment requirements for the echo endpoint."""
+@app.on_event("startup")
+async def startup():
+    """Initialize the x402 server on startup."""
+    server.initialize()
+
+
+def build_payment_requirements_v1() -> list[PaymentRequirementsV1]:
+    """Build V1 payment requirements for the echo endpoint."""
     return [
-        PaymentRequirements(
+        PaymentRequirementsV1(
             scheme="exact",
             network=NETWORK,
-            asset=USDC_ADDRESS,
-            amount=PRICE_AMOUNT,
+            max_amount_required=PRICE_AMOUNT,
+            resource="http://localhost:8000/echo",
+            description="Echo endpoint - returns your JSON payload",
+            mime_type="application/json",
             pay_to=WALLET_ADDRESS,
             max_timeout_seconds=60,
+            asset=USDC_ADDRESS,
             extra={},
         )
     ]
 
 
 def create_402_response() -> JSONResponse:
-    """Create a 402 Payment Required response."""
-    payment_requirements = build_payment_requirements()
-    payment_required = PaymentRequired(
-        x402_version=X402_VERSION,
+    """Create a 402 Payment Required response (V1 format for x402-rs compatibility)."""
+    payment_requirements = build_payment_requirements_v1()
+    payment_required = PaymentRequiredV1(
+        x402_version=1,
         error="Payment required",
-        resource=None,
         accepts=payment_requirements,
-        extensions=None,
     )
     return JSONResponse(
         status_code=402,
@@ -101,7 +108,7 @@ async def echo(request: Request):
         )
 
     # Get payment requirements
-    payment_requirements = build_payment_requirements()
+    payment_requirements = build_payment_requirements_v1()
 
     # Verify the payment with the facilitator
     try:
