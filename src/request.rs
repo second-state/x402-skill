@@ -1,6 +1,7 @@
 use crate::cli::Args;
 use crate::error::X402Error;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use reqwest::multipart::{Form, Part};
 use reqwest::{Body, Method};
 use std::fs;
 use std::str::FromStr;
@@ -60,5 +61,38 @@ impl RequestConfig {
             Some(d) => Ok(Some(Body::from(d.clone()))),
             None => Ok(None),
         }
+    }
+
+    pub fn parse_form(form_fields: &[String]) -> Result<Option<Form>, X402Error> {
+        if form_fields.is_empty() {
+            return Ok(None);
+        }
+
+        let mut form = Form::new();
+        for field in form_fields {
+            let parts: Vec<&str> = field.splitn(2, '=').collect();
+            if parts.len() != 2 {
+                return Err(X402Error::General(format!("Invalid form field: {}", field)));
+            }
+            let name = parts[0];
+            let value = parts[1];
+
+            if value.starts_with('@') {
+                // File upload
+                let path = &value[1..];
+                let filename = std::path::Path::new(path)
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("file")
+                    .to_string();
+                let content = std::fs::read(path)
+                    .map_err(|e| X402Error::General(format!("Failed to read file {}: {}", path, e)))?;
+                let part = Part::bytes(content).file_name(filename);
+                form = form.part(name.to_string(), part);
+            } else {
+                form = form.text(name.to_string(), value.to_string());
+            }
+        }
+        Ok(Some(form))
     }
 }

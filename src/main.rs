@@ -129,7 +129,11 @@ async fn run() -> Result<(), X402Error> {
     // Build request
     let mut request = client.request(req_config.method, &req_config.url);
     request = request.headers(req_config.headers);
-    if let Some(body) = req_config.body {
+
+    // Form data takes precedence over body
+    if let Some(form) = RequestConfig::parse_form(&args.form)? {
+        request = request.multipart(form);
+    } else if let Some(body) = req_config.body {
         request = request.body(body);
     }
 
