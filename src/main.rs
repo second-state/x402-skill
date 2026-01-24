@@ -42,6 +42,11 @@ async fn run() -> Result<(), X402Error> {
         }
     }
 
+    // Dry-run mode: make request without payment handling
+    if args.x402_dry_run {
+        return dry_run(&req_config, verbose).await;
+    }
+
     // Get private key and build x402 client
     let private_key = config.require_private_key()?;
     let signer: PrivateKeySigner = private_key
@@ -98,6 +103,43 @@ async fn run() -> Result<(), X402Error> {
         args.fail,
         verbose,
     ).await?;
+
+    Ok(())
+}
+
+async fn dry_run(req_config: &RequestConfig, verbose: bool) -> Result<(), X402Error> {
+    let client = reqwest::Client::new();
+    let response = client
+        .request(req_config.method.clone(), &req_config.url)
+        .headers(req_config.headers.clone())
+        .send()
+        .await?;
+
+    if response.status() == reqwest::StatusCode::PAYMENT_REQUIRED {
+        eprintln!("Payment required:");
+
+        // Try to extract x402 headers
+        for (name, value) in response.headers() {
+            let name_str = name.as_str().to_lowercase();
+            if name_str.starts_with("x-402") || name_str.starts_with("x402") {
+                eprintln!("  {}: {}", name, value.to_str().unwrap_or("<binary>"));
+            }
+        }
+
+        // Try to parse body for payment details
+        let body = response.text().await.unwrap_or_default();
+        if !body.is_empty() {
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body) {
+                eprintln!("  Payment details: {}", serde_json::to_string_pretty(&json).unwrap_or(body));
+            } else {
+                eprintln!("  Body: {}", body);
+            }
+        }
+
+        eprintln!("(dry run - no payment made)");
+    } else if verbose {
+        eprintln!("< {} (no payment required)", response.status());
+    }
 
     Ok(())
 }
