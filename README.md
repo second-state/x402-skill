@@ -1,75 +1,56 @@
-# x402curl
+# x402 Echo Server
 
-A curl-like CLI tool with automatic x402 payment handling.
+A minimal FastAPI server with x402 payment-gated echo endpoint for testing x402curl.
 
-## Installation
+## Setup
 
 ```bash
-cargo install x402curl
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -e .
+
+# Configure wallet address
+cp .env.example .env
+# Edit .env with your Base Sepolia wallet address
+```
+
+## Run
+
+```bash
+uvicorn echo_server.server:app --reload --port 8000
+```
+
+## Test with x402curl
+
+```bash
+# Without payment - returns 402
+curl -X POST http://localhost:8000/echo \
+  -H "Content-Type: application/json" \
+  -d '{"hello": "world"}'
+
+# With x402curl - handles payment automatically
+x402curl -X POST http://localhost:8000/echo \
+  -H "Content-Type: application/json" \
+  -d '{"hello": "world"}'
+
+# Dry-run to preview cost
+x402curl --x402-dry-run -X POST http://localhost:8000/echo \
+  -H "Content-Type: application/json" \
+  -d '{"hello": "world"}'
 ```
 
 ## Configuration
 
-Set your private key using one of these methods (in priority order):
+| Variable | Description |
+|----------|-------------|
+| `WALLET_ADDRESS` | Your Base Sepolia wallet to receive payments |
 
-1. **CLI flag**: `--x402-key 0x...`
-2. **Environment variable**: `export X402_PRIVATE_KEY=0x...`
-3. **Local .env file**: Add `X402_PRIVATE_KEY=0x...` to `./.env`
-4. **Global config**: Create `~/.x402/config`:
-   ```toml
-   private_key = "0x..."
-   ```
+## Endpoints
 
-## Usage
-
-```bash
-# Basic GET request
-x402curl https://api.example.com/resource
-
-# POST with JSON body
-x402curl -X POST -H "Content-Type: application/json" -d '{"key": "value"}' https://api.example.com
-
-# Upload file
-x402curl -F "file=@document.pdf" https://api.example.com/upload
-
-# Preview payment requirements without paying
-x402curl --x402-dry-run https://api.example.com/paid-endpoint
-
-# Require confirmation before payment
-x402curl --confirm https://api.example.com/paid-endpoint
-
-# Verbose mode (shows payment details)
-x402curl -v https://api.example.com/paid-endpoint
-```
-
-## Supported Flags
-
-| Flag | Description |
-|------|-------------|
-| `-X, --request` | HTTP method |
-| `-H, --header` | Add header |
-| `-d, --data` | Request body |
-| `-o, --output` | Output file |
-| `-f, --fail` | Fail on HTTP errors |
-| `-s, --silent` | Silent mode |
-| `-v, --verbose` | Verbose output |
-| `-F, --form` | Form field |
-| `-u, --user` | Basic auth |
-| `-L, --location` | Follow redirects |
-| `--x402-dry-run` | Preview payment |
-| `--confirm` | Confirm before paying |
-
-## Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | General error |
-| 2 | Network error |
-| 3 | Payment error |
-| 4 | HTTP error |
-| 5 | Config error |
-
-## License
-
-MIT
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/echo` | POST | Payment-gated echo (requires $0.01 USDC) |
