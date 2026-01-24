@@ -1,0 +1,18 @@
+[project]
+name = "x402-echo-server"
+version = "0.1.0"
+description = "Minimal x402 payment-gated echo server for testing x402curl"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.32.0",
+    "x402-payment-service @ git+https://github.com/second-state/x402-payment-service.git",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.27.0",
+]
