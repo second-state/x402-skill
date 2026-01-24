@@ -11,11 +11,40 @@ use error::X402Error;
 use output::handle_response;
 use request::RequestConfig;
 use reqwest_middleware::ClientWithMiddleware;
+use std::io::{self, Write};
 use std::process::ExitCode;
 use std::sync::Arc;
 use x402_reqwest::{ReqwestWithPayments, ReqwestWithPaymentsBuild, X402Client};
 use x402_rs::scheme::v1_eip155_exact::client::V1Eip155ExactClient;
 use x402_rs::scheme::v2_eip155_exact::client::V2Eip155ExactClient;
+
+fn prompt_confirmation(amount: &str, recipient: &str) -> Result<bool, X402Error> {
+    eprint!("Payment required: {}\nRecipient: {}\nProceed? [y/N] ", amount, recipient);
+    io::stderr().flush().map_err(|e| X402Error::General(e.to_string()))?;
+
+    let mut input = String::new();
+    io::stdin()
+        .read_line(&mut input)
+        .map_err(|e| X402Error::General(e.to_string()))?;
+
+    Ok(input.trim().eq_ignore_ascii_case("y") || input.trim().eq_ignore_ascii_case("yes"))
+}
+
+fn parse_payment_info(body: &str) -> (String, String) {
+    // Try to parse JSON payment info
+    if let Ok(json) = serde_json::from_str::<serde_json::Value>(body) {
+        let amount = json.get("amount")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unknown amount");
+        let recipient = json.get("recipient")
+            .or_else(|| json.get("payTo"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("unknown");
+        (amount.to_string(), recipient.to_string())
+    } else {
+        ("unknown amount".to_string(), "unknown".to_string())
+    }
+}
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -45,6 +74,28 @@ async fn run() -> Result<(), X402Error> {
     // Dry-run mode: make request without payment handling
     if args.x402_dry_run {
         return dry_run(&req_config, verbose).await;
+    }
+
+    // Confirmation mode: check if payment required and prompt user
+    if args.confirm || config.confirm {
+        // Pre-flight request to check if payment required
+        let preflight_client = reqwest::Client::new();
+        let preflight_response = preflight_client
+            .request(req_config.method.clone(), &req_config.url)
+            .headers(req_config.headers.clone())
+            .send()
+            .await?;
+
+        if preflight_response.status() == reqwest::StatusCode::PAYMENT_REQUIRED {
+            // Extract payment info and prompt
+            let body = preflight_response.text().await.unwrap_or_default();
+            let (amount, recipient) = parse_payment_info(&body);
+
+            if !prompt_confirmation(&amount, &recipient)? {
+                eprintln!("Payment cancelled.");
+                return Ok(());
+            }
+        }
     }
 
     // Get private key and build x402 client
