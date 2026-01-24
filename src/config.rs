@@ -50,7 +50,7 @@ impl Config {
         }
 
         // Priority 3: .env file in current directory
-        if let Ok(_) = dotenvy::dotenv() {
+        if dotenvy::dotenv().is_ok() {
             if let Ok(key) = std::env::var("X402_PRIVATE_KEY") {
                 if !key.is_empty() {
                     return Ok(Config {
