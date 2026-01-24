@@ -1,5 +1,7 @@
+mod cli;
 mod error;
 
+use cli::Args;
 use error::X402Error;
 use std::process::ExitCode;
 
@@ -15,6 +17,13 @@ async fn main() -> ExitCode {
 }
 
 async fn run() -> Result<(), X402Error> {
-    println!("x402curl - coming soon");
+    let args = Args::parse_args();
+
+    if args.verbose {
+        eprintln!("> {} {}", args.method, args.url);
+    }
+
+    println!("URL: {}", args.url);
+    println!("Method: {}", args.method);
     Ok(())
 }
