@@ -4,12 +4,18 @@
 # Environment
 .env
 .env.*
+!.env.example
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
 
 # Rust
 target/
