@@ -1,0 +1,25 @@
+[package]
+name = "x402curl"
+version = "0.1.0"
+edition = "2021"
+description = "curl with automatic x402 payment handling"
+license = "MIT"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+x402-rs = { git = "https://github.com/x402-rs/x402-rs" }
+x402-reqwest = { git = "https://github.com/x402-rs/x402-rs" }
+reqwest = { version = "0.12", features = ["multipart", "json"] }
+reqwest-middleware = "0.4"
+dotenvy = "0.15"
+toml = "0.8"
+dirs = "6"
+thiserror = "2"
+alloy-signer-local = "1"
+
+[dev-dependencies]
+wiremock = "0.6"
+assert_cmd = "2"
+predicates = "3"
+tempfile = "3"
