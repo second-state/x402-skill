@@ -1,0 +1,19 @@
+# Worktrees
+.worktrees/
+
+# Environment
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Rust
+target/
+Cargo.lock
+
+# macOS
+.DS_Store
