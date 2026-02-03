@@ -15,8 +15,8 @@ use std::io::{self, Write};
 use std::process::ExitCode;
 use std::sync::Arc;
 use x402_reqwest::{ReqwestWithPayments, ReqwestWithPaymentsBuild, X402Client};
-use x402_rs::scheme::v1_eip155_exact::client::V1Eip155ExactClient;
-use x402_rs::scheme::v2_eip155_exact::client::V2Eip155ExactClient;
+use x402_chain_eip155::v1_eip155_exact::client::V1Eip155ExactClient;
+use x402_chain_eip155::v2_eip155_exact::client::V2Eip155ExactClient;
 
 fn prompt_confirmation(amount: &str, recipient: &str) -> Result<bool, X402Error> {
     eprint!("Payment required: {}\nRecipient: {}\nProceed? [y/N] ", amount, recipient);
