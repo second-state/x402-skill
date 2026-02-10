@@ -1,10 +1,25 @@
 import os
 
+import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from x402.fastapi.middleware import require_payment
 
 load_dotenv()
+
+# Workaround: x402 Python SDK's FacilitatorClient doesn't set httpx timeout,
+# causing settle() to timeout on Base network (block confirmation: 10-28s).
+# See: https://github.com/coinbase/x402/issues/1062
+_original_httpx_init = httpx.AsyncClient.__init__
+
+
+def _patched_httpx_init(self: httpx.AsyncClient, *args: object, **kwargs: object) -> None:
+    if "timeout" not in kwargs:
+        kwargs["timeout"] = 60.0  # 60 seconds for blockchain transactions
+    _original_httpx_init(self, *args, **kwargs)
+
+
+httpx.AsyncClient.__init__ = _patched_httpx_init  # type: ignore[method-assign]
 
 app = FastAPI(
     title="x402 Echo Server",
