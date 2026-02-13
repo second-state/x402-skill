@@ -103,7 +103,6 @@ echo "X402_PRIVATE_KEY=${KEY}" >> .env
   2. `X402_PRIVATE_KEY` environment variable (including `.env`)
   4. `--x402-wallet` + `--x402-wallet-password` CLI flags
   5. `X402_WALLET` + `X402_WALLET_PASSWORD` env vars (including `.env`)
-  6. `~/.x402/config` (TOML file)
 
 ## Step 3: Fund the wallet
 
