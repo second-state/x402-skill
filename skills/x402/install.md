@@ -3,7 +3,7 @@
 Follow these steps to install the x402curl binary and configure a wallet so the x402 skill can handle payment-gated API requests.
 
 > **Install location:** Commands below use the default `~/.claude/skills/x402/scripts/`.
-> Alternatives: `./.claude/skills`, `~/.openclaw/skills`, `./.openclaw/skills` — replace the prefix if using a different agent tool.
+> Alternatives: `~/.openclaw/skills`, `~/.opencode/skills`, `~/.agent/skills` — replace the prefix if using a different agent tool.
 
 ## Step 1: Install x402curl
 
