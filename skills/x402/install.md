@@ -5,7 +5,19 @@ Follow these steps to install the x402curl binary and configure a wallet so the 
 > **Install location:** Commands below use the default `~/.openclaw/skills`.
 > Alternatives: `~/.claude/skills`, `~/.opencode/skills`, `~/.agent/skills` — replace the prefix if using a different agent tool.
 
-## Step 1: Install x402curl
+## Step 1: Install the SKILL
+
+```bash
+SKILL_DIR="${HOME}/.openclaw/skills/x402"
+mkdir -p "$SKILL_DIR"
+
+# Clone the skill directory
+git clone --depth 1 https://github.com/second-state/x402-skill.git /tmp/x402-skill-repo
+cp -r /tmp/x402-skill-repo/skills/x402/* "$SKILL_DIR"
+rm -rf /tmp/x402-skill-repo
+```
+
+## Step 2: Install x402curl
 
 Detect the platform and download the matching release:
 
@@ -43,7 +55,7 @@ Verify the installation:
 | macOS          | arm64       | `aarch64-apple-darwin`         |
 
 
-## Step 2: Set up a wallet
+## Step 3: Set up a wallet
 
 x402curl needs a wallet or private key to sign payments. Choose **one** of the following options.
 
