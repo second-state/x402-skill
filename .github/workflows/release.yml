@@ -1,15 +1,19 @@
 name: Release
 
 on:
-  pull_request:
-    types: [closed]
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 0.2.0). Defaults to Cargo.toml version.'
+        required: false
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  knope-release:
-    if: github.head_ref == 'release' && github.event.pull_request.merged == true
+  create-release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -17,26 +21,30 @@ jobs:
       version: ${{ steps.get-version.outputs.version }}
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - uses: knope-dev/action@v2.1.0
-        with:
-          version: 0.22.1
-
-      - run: knope release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get version
         id: get-version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          VERSION=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          if [ -n "$INPUT_VERSION" ]; then
+            VERSION="$INPUT_VERSION"
+          elif [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            VERSION=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.get-version.outputs.version }}
+        run: gh release create "v${VERSION}" --generate-notes
 
   build:
     name: Build ${{ matrix.target }}
-    needs: knope-release
+    needs: create-release
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -66,7 +74,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: v${{ needs.knope-release.outputs.version }}
+          ref: v${{ needs.create-release.outputs.version }}
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -83,26 +91,33 @@ jobs:
           key: ${{ matrix.target }}
 
       - name: Build release binary
+        env:
+          USE_CROSS: ${{ matrix.use_cross }}
+          TARGET: ${{ matrix.target }}
         run: |
-          if [ "${{ matrix.use_cross }}" = "true" ]; then
-            cross build --release --target ${{ matrix.target }}
+          if [ "$USE_CROSS" = "true" ]; then
+            cross build --release --target "$TARGET"
           else
-            cargo build --release --target ${{ matrix.target }}
+            cargo build --release --target "$TARGET"
           fi
         shell: bash
 
       - name: Package binary (Unix)
         if: runner.os != 'Windows'
+        env:
+          TARGET: ${{ matrix.target }}
         run: |
-          cd target/${{ matrix.target }}/release
-          tar czf ../../../x402curl-${{ matrix.target }}.tar.gz x402curl
+          cd "target/${TARGET}/release"
+          tar czf "../../../x402curl-${TARGET}.tar.gz" x402curl
         shell: bash
 
       - name: Package binary (Windows)
         if: runner.os == 'Windows'
+        env:
+          TARGET: ${{ matrix.target }}
         run: |
-          cd target/${{ matrix.target }}/release
-          7z a ../../../x402curl-${{ matrix.target }}.zip x402curl.exe
+          cd "target/${TARGET}/release"
+          7z a "../../../x402curl-${TARGET}.zip" x402curl.exe
         shell: bash
 
       - name: Upload artifact
@@ -113,7 +128,7 @@ jobs:
 
   upload-assets:
     name: Upload Release Assets
-    needs: [knope-release, build]
+    needs: [create-release, build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -124,7 +139,8 @@ jobs:
           merge-multiple: true
 
       - name: Upload assets to GitHub Release
-        run: gh release upload "v${{ needs.knope-release.outputs.version }}" artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: second-state/x402-skill
+          VERSION: ${{ needs.create-release.outputs.version }}
+        run: gh release upload "v${VERSION}" artifacts/*
