@@ -83,7 +83,7 @@ jobs:
             -d '{"hello": "world"}' \
             --x402-wallet wallet.json \
             --x402-wallet-password testpassword123 \
-            -v \
+            -f -v \
             http://localhost:8000/echo 2>&1
           EXIT_CODE=$?
           set -e
