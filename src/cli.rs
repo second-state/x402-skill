@@ -57,6 +57,14 @@ pub struct Args {
     #[arg(long = "x402-key")]
     pub x402_key: Option<String>,
 
+    /// Path to Ethereum keystore (wallet.json) file
+    #[arg(long = "x402-wallet")]
+    pub x402_wallet: Option<String>,
+
+    /// Password for the keystore wallet file
+    #[arg(long = "x402-wallet-password")]
+    pub x402_wallet_password: Option<String>,
+
     /// Show payment requirements without paying
     #[arg(long = "x402-dry-run")]
     pub x402_dry_run: bool,

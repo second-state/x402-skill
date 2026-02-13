@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build x402curl
+        run: cargo build --release
+
+      - name: Run Rust tests
+        run: cargo test
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Create test keystore wallet
+        run: |
+          pip install eth-account
+          python3 -c "
+          from eth_account import Account
+          import json
+          acct = Account.create()
+          keystore = Account.encrypt(acct.key, 'testpassword123')
+          with open('wallet.json', 'w') as f:
+              json.dump(keystore, f)
+          with open('wallet_address.txt', 'w') as f:
+              f.write(acct.address)
+          print(f'Created wallet: {acct.address}')
+          "
+
+      - name: Install echo server
+        run: pip install -e .
+
+      - name: Start echo server
+        run: |
+          export WALLET_ADDRESS=$(cat wallet_address.txt)
+          uvicorn echo_server.server:app --host 0.0.0.0 --port 8000 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+              echo "Echo server is ready"
+              break
+            fi
+            echo "Waiting for echo server... ($i/30)"
+            sleep 1
+          done
+
+      - name: Test x402curl with keystore wallet (expect payment failure)
+        run: |
+          set +e
+          ./target/release/x402curl \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"hello": "world"}' \
+            --x402-wallet wallet.json \
+            --x402-wallet-password testpassword123 \
+            -v \
+            http://localhost:8000/echo 2>&1
+          EXIT_CODE=$?
+          set -e
+
+          echo "Exit code: $EXIT_CODE"
+
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "ERROR: Expected non-zero exit code (wallet has no funds)"
+            exit 1
+          fi
+
+          echo "PASS: x402curl correctly failed with exit code $EXIT_CODE (insufficient funds)"
+
+      - name: Verify keystore loads correctly (free endpoint)
+        run: |
+          ./target/release/x402curl \
+            --x402-wallet wallet.json \
+            --x402-wallet-password testpassword123 \
+            -v \
+            http://localhost:8000/health

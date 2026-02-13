@@ -4,7 +4,6 @@ mod error;
 mod output;
 mod request;
 
-use alloy_signer_local::PrivateKeySigner;
 use cli::Args;
 use config::Config;
 use error::X402Error;
@@ -59,7 +58,11 @@ async fn main() -> ExitCode {
 
 async fn run() -> Result<(), X402Error> {
     let args = Args::parse_args();
-    let config = Config::load(args.x402_key.as_deref())?;
+    let config = Config::load(
+        args.x402_key.as_deref(),
+        args.x402_wallet.as_deref(),
+        args.x402_wallet_password.as_deref(),
+    )?;
     let req_config = RequestConfig::from_args(&args)?;
 
     let verbose = args.verbose || config.verbose;
@@ -98,11 +101,8 @@ async fn run() -> Result<(), X402Error> {
         }
     }
 
-    // Get private key and build x402 client
-    let private_key = config.require_private_key()?;
-    let signer: PrivateKeySigner = private_key
-        .parse()
-        .map_err(|e| X402Error::Config(format!("Invalid private key: {}", e)))?;
+    // Get signer from private key or wallet keystore
+    let signer = config.require_signer()?;
 
     if verbose {
         eprintln!("* Signing address: {:?}", signer.address());
