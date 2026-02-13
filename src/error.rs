@@ -12,6 +12,10 @@ pub enum X402Error {
     #[error("Middleware error: {0}")]
     Middleware(#[from] reqwest_middleware::Error),
 
+    #[allow(dead_code)]
+    #[error("Payment error: {0}")]
+    Payment(String),
+
     #[error("HTTP error: {0}")]
     Http(String),
 
@@ -25,6 +29,7 @@ impl X402Error {
             X402Error::General(_) => ExitCode::from(1),
             X402Error::Network(_) => ExitCode::from(2),
             X402Error::Middleware(_) => ExitCode::from(2),
+            X402Error::Payment(_) => ExitCode::from(3),
             X402Error::Http(_) => ExitCode::from(4),
             X402Error::Config(_) => ExitCode::from(5),
         }
@@ -35,6 +40,7 @@ impl X402Error {
             X402Error::General(_) => 1,
             X402Error::Network(_) => 2,
             X402Error::Middleware(_) => 2,
+            X402Error::Payment(_) => 3,
             X402Error::Http(_) => 4,
             X402Error::Config(_) => 5,
         }
