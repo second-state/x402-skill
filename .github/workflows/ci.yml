@@ -50,7 +50,10 @@ jobs:
           "
 
       - name: Install echo server
-        run: pip install -e ".[dev]"
+        run: |
+          pip install "x402==0.2.1"
+          pip install -e ".[dev]" --no-deps
+          pip install fastapi uvicorn python-dotenv httpx
 
       - name: Start echo server
         run: |
