@@ -1,19 +1,42 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*"
-
-permissions:
-  contents: write
+  pull_request:
+    types: [closed]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  knope-release:
+    if: github.head_ref == 'release' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: knope-dev/action@v2.1.0
+        with:
+          version: 0.22.1
+
+      - run: knope release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get version
+        id: get-version
+        run: |
+          VERSION=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
   build:
     name: Build ${{ matrix.target }}
+    needs: knope-release
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -42,6 +65,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          ref: v${{ needs.knope-release.outputs.version }}
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -86,22 +111,20 @@ jobs:
           name: x402curl-${{ matrix.target }}
           path: x402curl-${{ matrix.target }}.*
 
-  release:
-    name: Create Release
-    needs: build
+  upload-assets:
+    name: Upload Release Assets
+    needs: [knope-release, build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v5
         with:
           path: artifacts
           merge-multiple: true
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          generate_release_notes: true
-          files: artifacts/*
+      - name: Upload assets to GitHub Release
+        run: gh release upload "v${{ needs.knope-release.outputs.version }}" artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: second-state/x402-skill
