@@ -25,14 +25,15 @@ esac
 TAG=$(gh api repos/second-state/x402-skill/releases/latest --jq '.tag_name')
 URL="https://github.com/second-state/x402-skill/releases/download/${TAG}/x402curl-${TARGET}.tar.gz"
 
-curl -fsSL "$URL" | tar xz -C skills/x402/scripts
-chmod +x skills/x402/scripts/x402curl
+mkdir -p ~/.claude/skills/x402/scripts
+curl -fsSL "$URL" | tar xz -C ~/.claude/skills/x402/scripts
+chmod +x ~/.claude/skills/x402/scripts/x402curl
 ```
 
 Verify the installation:
 
 ```bash
-./skills/x402/scripts/x402curl --version
+~/.claude/skills/x402/scripts/x402curl --version
 ```
 
 | Platform       | Architecture | Target triple                  |
@@ -48,13 +49,14 @@ Requires a Rust toolchain (`cargo`).
 
 ```bash
 cargo build --release
-cp target/release/x402curl skills/x402/scripts/x402curl
+mkdir -p ~/.claude/skills/x402/scripts
+cp target/release/x402curl ~/.claude/skills/x402/scripts/x402curl
 ```
 
 Verify:
 
 ```bash
-./skills/x402/scripts/x402curl --version
+~/.claude/skills/x402/scripts/x402curl --version
 ```
 
 ## Step 2: Set up a wallet
@@ -111,7 +113,7 @@ Get free testnet tokens from the [Alchemy Base Sepolia faucet](https://www.alche
 Transfer USDC to your wallet address on Base network. To find your address:
 
 ```bash
-./skills/x402/scripts/x402curl --x402-dry-run https://any-x402-endpoint.example.com
+~/.claude/skills/x402/scripts/x402curl --x402-dry-run https://any-x402-endpoint.example.com
 ```
 
 The `--x402-dry-run` flag shows payment requirements (including your wallet address) without actually sending a transaction.
@@ -128,7 +130,7 @@ The key must be exactly 64 hexadecimal characters. Remove any `0x` prefix or sur
 Check that `X402_WALLET` in `.env` points to an existing file path and `X402_WALLET_PASSWORD` is set.
 
 **Binary not found or permission denied**
-Ensure `skills/x402/scripts/x402curl` exists and is executable (`chmod +x`).
+Ensure `~/.claude/skills/x402/scripts/x402curl` exists and is executable (`chmod +x`).
 
 **Platform not supported**
 Pre-built binaries are available for Linux (x86_64, aarch64) and macOS (x86_64, arm64). For other platforms, build from source (Option B in Step 1).

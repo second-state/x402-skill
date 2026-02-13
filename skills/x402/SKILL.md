@@ -26,7 +26,7 @@ Verify once per session, before the first retry:
 **1. Binary exists:**
 
 ```bash
-test -x ./skills/x402/scripts/x402curl
+test -x ~/.claude/skills/x402/scripts/x402curl
 ```
 
 **2. Wallet configured:**
@@ -37,7 +37,7 @@ grep -q "X402_PRIVATE_KEY\|X402_WALLET" .env 2>/dev/null
 
 If **either** check fails, tell the user:
 
-> x402 is not fully set up. Follow the guide in `skills/x402/Install.md` to install x402curl and configure a wallet.
+> x402 is not fully set up. Follow the guide in `~/.claude/skills/x402/Install.md` to install x402curl and configure a wallet.
 
 Do not attempt the retry.
 
@@ -49,7 +49,7 @@ Do not attempt the retry.
 
 **Step 2:** Transform the original curl command into an x402curl command.
 
-Replace `curl` with `./skills/x402/scripts/x402curl` and adjust flags:
+Replace `curl` with `~/.claude/skills/x402/scripts/x402curl` and adjust flags:
 
 **Preserve** these flags as-is:
 `-X`, `-H`, `-d`, `--data`, `--data-binary`, `-o`, `-F`, `-u`, `-L`, `-f`
@@ -64,7 +64,7 @@ curl -X POST -s https://api.example.com/endpoint \
   -d '{"key": "value"}'
 
 # Transformed
-./skills/x402/scripts/x402curl -X POST https://api.example.com/endpoint \
+~/.claude/skills/x402/scripts/x402curl -X POST https://api.example.com/endpoint \
   -H "Content-Type: application/json" \
   -d '{"key": "value"}'
 ```
@@ -81,7 +81,7 @@ Map x402curl exit codes to user-friendly messages:
 | 2 | Network error | "Could not reach the payment network. Check your internet connection and try again." |
 | 3 | Insufficient funds | "Payment failed: insufficient funds. Your wallet needs USDC on Base network. Testnet: get funds from https://www.alchemy.com/faucets/base-sepolia — Mainnet: transfer USDC to your wallet on Base." |
 | 4 | HTTP error | "The server returned an error after payment. The API may have changed requirements or be temporarily unavailable." |
-| 5 | Config error | "Wallet configuration error. Follow `skills/x402/Install.md` to fix your setup." |
+| 5 | Config error | "Wallet configuration error. Follow `~/.claude/skills/x402/Install.md` to fix your setup." |
 
 ## Examples
 
@@ -93,7 +93,7 @@ curl https://paid-api.example.com/data
 # → 402 with X-Payment header
 
 # 2. Retry with x402curl
-./skills/x402/scripts/x402curl https://paid-api.example.com/data
+~/.claude/skills/x402/scripts/x402curl https://paid-api.example.com/data
 # → 200 with data
 ```
 
@@ -107,7 +107,7 @@ curl -X POST https://translate.example.com/v1 \
 # → 402 with x402Version in body
 
 # 2. Retry
-./skills/x402/scripts/x402curl -X POST https://translate.example.com/v1 \
+~/.claude/skills/x402/scripts/x402curl -X POST https://translate.example.com/v1 \
   -H "Content-Type: application/json" \
   -d '{"text": "Hello", "target": "es"}'
 # → 200 with translation
@@ -121,7 +121,7 @@ curl -X POST https://ocr.example.com/extract -F "file=@document.pdf"
 # → 402
 
 # 2. Retry
-./skills/x402/scripts/x402curl -X POST https://ocr.example.com/extract \
+~/.claude/skills/x402/scripts/x402curl -X POST https://ocr.example.com/extract \
   -F "file=@document.pdf"
 ```
 
@@ -133,5 +133,5 @@ curl -o result.json https://paid-api.example.com/report
 # → 402
 
 # 2. Retry
-./skills/x402/scripts/x402curl -o result.json https://paid-api.example.com/report
+~/.claude/skills/x402/scripts/x402curl -o result.json https://paid-api.example.com/report
 ```
