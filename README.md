@@ -51,16 +51,27 @@ cargo install --path .
 
 ### Configure wallet
 
+x402curl supports two wallet formats: raw private key or Keystore v3 (JSON wallet file). If both are configured, the private key takes priority.
+
+**Option A: Private key**
+
 ```bash
-# For paying (client side) - add private key to .env
 echo 'X402_PRIVATE_KEY=your_64_hex_char_key' >> .env
 ```
 
-The private key is resolved in this order:
+**Option B: Keystore v3 wallet**
+
+```bash
+echo 'X402_WALLET=/path/to/wallet.json' >> .env
+echo 'X402_WALLET_PASSWORD=your_password' >> .env
+```
+
+Credentials are resolved in this order:
 1. `--x402-key` CLI flag
-2. `X402_PRIVATE_KEY` environment variable
-3. `./.env` file in current directory
-4. `~/.x402/config` global TOML config file
+2. `X402_PRIVATE_KEY` environment variable / `.env` file
+3. `--x402-wallet` + `--x402-wallet-password` CLI flags
+4. `X402_WALLET` + `X402_WALLET_PASSWORD` environment variables / `.env` file
+5. `~/.x402/config` global TOML config file
 
 ## x402curl Usage
 
@@ -80,6 +91,10 @@ x402curl --confirm -X POST https://api.example.com/endpoint
 
 # File upload via multipart form
 x402curl -X POST https://api.example.com/upload -F "file=@document.pdf"
+
+# Use a Keystore v3 wallet file instead of a raw private key
+x402curl --x402-wallet wallet.json --x402-wallet-password mypassword \
+  -X POST https://api.example.com/endpoint
 
 # Verbose mode - shows signing address, payment flow, headers
 x402curl -v -X POST https://api.example.com/endpoint
@@ -106,6 +121,8 @@ x402curl -v -X POST https://api.example.com/endpoint
 | Flag | Description |
 |------|-------------|
 | `--x402-key` | Override private key for this request |
+| `--x402-wallet` | Path to Keystore v3 wallet (JSON) file |
+| `--x402-wallet-password` | Password for the keystore wallet file |
 | `--x402-dry-run` | Show payment requirements without paying |
 | `--confirm` | Prompt before making payment |
 
