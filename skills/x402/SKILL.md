@@ -8,6 +8,8 @@ trigger: reactive
 
 When an HTTP request returns **402 Payment Required** with x402 payment info, automatically retry using `x402curl`.
 
+NOTE: If you are Claude Code, set `{baseDir}` as `.` -- the directory where this `SKILL.md` file is located in.
+
 ## Detection
 
 Only activate when **all** of the following are true:
@@ -19,38 +21,7 @@ Only activate when **all** of the following are true:
 
 If a 402 response lacks these markers, inform the user it requires payment but **do not retry** — it is not an x402 endpoint.
 
-## Prerequisites Check
-
-Verify once per session, before the first retry:
-
-**1. Resolve skills folder:**
-
-Detect which skills folder contains x402curl by probing known locations:
-
-```bash
-for dir in ~/.claude/skills ~/.openclaw/skills ~/.opencode/skills ~/.agent/skills; do
-  if [ -x "$dir/x402/scripts/x402curl" ]; then
-    echo "$dir"
-    break
-  fi
-done
-```
-
-Remember the result as `skills_folder`. If no match is found, the binary is not installed — point the user to install.md and do not attempt the retry.
-
-**2. Wallet configured:**
-
-```bash
-grep -q "X402_PRIVATE_KEY\|X402_WALLET" .env 2>/dev/null
-```
-
-If **either** check fails, tell the user:
-
-> x402 is not fully set up. Follow the guide in `${skills_folder}/x402/install.md` to install x402curl and configure a wallet.
-
-Do not attempt the retry.
-
-## Retry Workflow
+## Workflow
 
 **Step 1:** Inform the user (one line):
 
@@ -58,7 +29,7 @@ Do not attempt the retry.
 
 **Step 2:** Transform the original curl command into an x402curl command.
 
-Replace `curl` with `${skills_folder}/x402/scripts/x402curl` and adjust flags:
+Replace `curl` with `{baseDir}/scripts/x402curl` and adjust flags:
 
 **Preserve** these flags as-is:
 `-X`, `-H`, `-d`, `--data`, `--data-binary`, `-o`, `-F`, `-u`, `-L`, `-f`
@@ -73,7 +44,7 @@ curl -X POST -s https://api.example.com/endpoint \
   -d '{"key": "value"}'
 
 # Transformed
-${skills_folder}/x402/scripts/x402curl -X POST https://api.example.com/endpoint \
+{baseDir}/scripts/x402curl -X POST https://api.example.com/endpoint \
   -H "Content-Type: application/json" \
   -d '{"key": "value"}'
 ```
@@ -90,7 +61,7 @@ Map x402curl exit codes to user-friendly messages:
 | 2 | Network error | "Could not reach the payment network. Check your internet connection and try again." |
 | 3 | Insufficient funds | "Payment failed: insufficient funds. Your wallet needs USDC on Base network. Testnet: get funds from https://www.alchemy.com/faucets/base-sepolia — Mainnet: transfer USDC to your wallet on Base." |
 | 4 | HTTP error | "The server returned an error after payment. The API may have changed requirements or be temporarily unavailable." |
-| 5 | Config error | "Wallet configuration error. Follow `${skills_folder}/x402/Install.md` to fix your setup." |
+| 5 | Config error | "Wallet configuration error. Follow `install.md` to fix your setup." |
 
 ## Examples
 
@@ -102,7 +73,7 @@ curl https://paid-api.example.com/data
 # → 402 with X-Payment header
 
 # 2. Retry with x402curl
-${skills_folder}/x402/scripts/x402curl https://paid-api.example.com/data
+{baseDir}/scripts/x402curl https://paid-api.example.com/data
 # → 200 with data
 ```
 
@@ -116,7 +87,7 @@ curl -X POST https://translate.example.com/v1 \
 # → 402 with x402Version in body
 
 # 2. Retry
-${skills_folder}/x402/scripts/x402curl -X POST https://translate.example.com/v1 \
+{baseDir}/scripts/x402curl -X POST https://translate.example.com/v1 \
   -H "Content-Type: application/json" \
   -d '{"text": "Hello", "target": "es"}'
 # → 200 with translation
@@ -130,7 +101,7 @@ curl -X POST https://ocr.example.com/extract -F "file=@document.pdf"
 # → 402
 
 # 2. Retry
-${skills_folder}/x402/scripts/x402curl -X POST https://ocr.example.com/extract \
+{baseDir}/scripts/x402curl -X POST https://ocr.example.com/extract \
   -F "file=@document.pdf"
 ```
 
@@ -142,5 +113,5 @@ curl -o result.json https://paid-api.example.com/report
 # → 402
 
 # 2. Retry
-${skills_folder}/x402/scripts/x402curl -o result.json https://paid-api.example.com/report
+{baseDir}/scripts/x402curl -o result.json https://paid-api.example.com/report
 ```
