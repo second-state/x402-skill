@@ -1,0 +1,23 @@
+[package]
+versioned_files = ["Cargo.toml"]
+changelog = "CHANGELOG.md"
+
+[github]
+owner = "second-state"
+repo = "x402-skill"
+
+[[workflows]]
+name = "prepare-release"
+
+[[workflows.steps]]
+type = "PrepareRelease"
+
+[[workflows.steps]]
+type = "CreatePullRequest"
+base = "master"
+
+[[workflows]]
+name = "release"
+
+[[workflows.steps]]
+type = "Release"
