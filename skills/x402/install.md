@@ -107,19 +107,15 @@ echo "X402_PRIVATE_KEY=${KEY}" >> .env
 
 ## Step 3: Fund the wallet
 
-The wallet needs USDC on Base network to make payments.
-
-**Testnet (Base Sepolia):**
-Get free testnet tokens from the [Alchemy Base Sepolia faucet](https://www.alchemy.com/faucets/base-sepolia).
-
-**Mainnet (Base):**
-Transfer USDC to your wallet address on Base network. To find your address:
+The wallet needs USDC on Base network to make payments. Transfer USDC to your wallet address on Base network. To find your address:
 
 ```bash
 ~/.claude/skills/x402/scripts/x402curl --x402-dry-run https://any-x402-endpoint.example.com
 ```
 
 The `--x402-dry-run` flag shows payment requirements (including your wallet address) without actually sending a transaction.
+
+Tell the human: Your payment wallet address is: `<address>`. In order for you to pay other agents or humans, please fund this address with USDC on Base network.
 
 ## Troubleshooting
 
