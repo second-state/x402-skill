@@ -1,6 +1,6 @@
 [package]
 name = "x402curl"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "curl with automatic x402 payment handling"
 license = "MIT"
