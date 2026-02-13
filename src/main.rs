@@ -13,13 +13,18 @@ use reqwest_middleware::ClientWithMiddleware;
 use std::io::{self, Write};
 use std::process::ExitCode;
 use std::sync::Arc;
-use x402_reqwest::{ReqwestWithPayments, ReqwestWithPaymentsBuild, X402Client};
 use x402_chain_eip155::v1_eip155_exact::client::V1Eip155ExactClient;
 use x402_chain_eip155::v2_eip155_exact::client::V2Eip155ExactClient;
+use x402_reqwest::{ReqwestWithPayments, ReqwestWithPaymentsBuild, X402Client};
 
 fn prompt_confirmation(amount: &str, recipient: &str) -> Result<bool, X402Error> {
-    eprint!("Payment required: {}\nRecipient: {}\nProceed? [y/N] ", amount, recipient);
-    io::stderr().flush().map_err(|e| X402Error::General(e.to_string()))?;
+    eprint!(
+        "Payment required: {}\nRecipient: {}\nProceed? [y/N] ",
+        amount, recipient
+    );
+    io::stderr()
+        .flush()
+        .map_err(|e| X402Error::General(e.to_string()))?;
 
     let mut input = String::new();
     io::stdin()
@@ -32,10 +37,12 @@ fn prompt_confirmation(amount: &str, recipient: &str) -> Result<bool, X402Error>
 fn parse_payment_info(body: &str) -> (String, String) {
     // Try to parse JSON payment info
     if let Ok(json) = serde_json::from_str::<serde_json::Value>(body) {
-        let amount = json.get("amount")
+        let amount = json
+            .get("amount")
             .and_then(|v| v.as_str())
             .unwrap_or("unknown amount");
-        let recipient = json.get("recipient")
+        let recipient = json
+            .get("recipient")
             .or_else(|| json.get("payTo"))
             .and_then(|v| v.as_str())
             .unwrap_or("unknown");
@@ -121,10 +128,7 @@ async fn run() -> Result<(), X402Error> {
         client_builder.redirect(reqwest::redirect::Policy::none())
     };
 
-    let client: ClientWithMiddleware = client_builder
-        .build()?
-        .with_payments(x402_client)
-        .build();
+    let client: ClientWithMiddleware = client_builder.build()?.with_payments(x402_client).build();
 
     // Build request
     let mut request = client.request(req_config.method, &req_config.url);
@@ -152,12 +156,7 @@ async fn run() -> Result<(), X402Error> {
     let response = request.send().await?;
 
     // Handle response
-    handle_response(
-        response.into(),
-        args.output.as_deref(),
-        args.fail,
-        verbose,
-    ).await?;
+    handle_response(response, args.output.as_deref(), args.fail, verbose).await?;
 
     Ok(())
 }
@@ -185,7 +184,10 @@ async fn dry_run(req_config: &RequestConfig, verbose: bool) -> Result<(), X402Er
         let body = response.text().await.unwrap_or_default();
         if !body.is_empty() {
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body) {
-                eprintln!("  Payment details: {}", serde_json::to_string_pretty(&json).unwrap_or(body));
+                eprintln!(
+                    "  Payment details: {}",
+                    serde_json::to_string_pretty(&json).unwrap_or(body)
+                );
             } else {
                 eprintln!("  Body: {}", body);
             }

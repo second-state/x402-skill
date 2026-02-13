@@ -12,11 +12,19 @@ pub async fn handle_response(
     let status = response.status();
 
     if verbose {
-        eprintln!("< {} {}", status.as_u16(), status.canonical_reason().unwrap_or(""));
+        eprintln!(
+            "< {} {}",
+            status.as_u16(),
+            status.canonical_reason().unwrap_or("")
+        );
     }
 
     if fail_on_error && !status.is_success() {
-        return Err(X402Error::Http(format!("HTTP {} {}", status.as_u16(), status.canonical_reason().unwrap_or(""))));
+        return Err(X402Error::Http(format!(
+            "HTTP {} {}",
+            status.as_u16(),
+            status.canonical_reason().unwrap_or("")
+        )));
     }
 
     let body = response.bytes().await?;
