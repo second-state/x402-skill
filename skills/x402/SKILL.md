@@ -28,7 +28,7 @@ Verify once per session, before the first retry:
 Detect which skills folder contains x402curl by probing known locations:
 
 ```bash
-for dir in ~/.claude/skills ./.claude/skills ~/.openclaw/skills ./.openclaw/skills; do
+for dir in ~/.claude/skills ~/.openclaw/skills ~/.opencode/skills ~/.agent/skills; do
   if [ -x "$dir/x402/scripts/x402curl" ]; then
     echo "$dir"
     break
@@ -36,7 +36,7 @@ for dir in ~/.claude/skills ./.claude/skills ~/.openclaw/skills ./.openclaw/skil
 done
 ```
 
-Remember the result as `skills_folder`. If no match is found, the binary is not installed — point the user to Install.md and do not attempt the retry.
+Remember the result as `skills_folder`. If no match is found, the binary is not installed — point the user to install.md and do not attempt the retry.
 
 **2. Wallet configured:**
 
@@ -46,7 +46,7 @@ grep -q "X402_PRIVATE_KEY\|X402_WALLET" .env 2>/dev/null
 
 If **either** check fails, tell the user:
 
-> x402 is not fully set up. Follow the guide in `${skills_folder}/x402/Install.md` to install x402curl and configure a wallet.
+> x402 is not fully set up. Follow the guide in `${skills_folder}/x402/install.md` to install x402curl and configure a wallet.
 
 Do not attempt the retry.
 
