@@ -50,20 +50,26 @@ jobs:
           "
 
       - name: Install echo server
-        run: pip install -e .
+        run: pip install -e ".[dev]"
 
       - name: Start echo server
         run: |
           export WALLET_ADDRESS=$(cat wallet_address.txt)
           uvicorn echo_server.server:app --host 0.0.0.0 --port 8000 &
+          SERVER_READY=false
           for i in $(seq 1 30); do
             if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
               echo "Echo server is ready"
+              SERVER_READY=true
               break
             fi
             echo "Waiting for echo server... ($i/30)"
             sleep 1
           done
+          if [ "$SERVER_READY" != "true" ]; then
+            echo "ERROR: Echo server failed to start"
+            exit 1
+          fi
 
       - name: Test x402curl with keystore wallet (expect payment failure)
         run: |
