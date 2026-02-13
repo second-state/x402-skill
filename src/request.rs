@@ -36,7 +36,10 @@ impl RequestConfig {
         for header in headers {
             let parts: Vec<&str> = header.splitn(2, ':').collect();
             if parts.len() != 2 {
-                return Err(X402Error::General(format!("Invalid header format: {}", header)));
+                return Err(X402Error::General(format!(
+                    "Invalid header format: {}",
+                    header
+                )));
             }
             let name = HeaderName::from_str(parts[0].trim())
                 .map_err(|_| X402Error::General(format!("Invalid header name: {}", parts[0])))?;
@@ -47,15 +50,19 @@ impl RequestConfig {
         Ok(map)
     }
 
-    fn parse_body(data: &Option<String>, data_binary: &Option<String>) -> Result<Option<Body>, X402Error> {
+    fn parse_body(
+        data: &Option<String>,
+        data_binary: &Option<String>,
+    ) -> Result<Option<Body>, X402Error> {
         // data_binary takes precedence
         let data_str = data_binary.as_ref().or(data.as_ref());
 
         match data_str {
             Some(d) if d.starts_with('@') => {
                 let path = &d[1..];
-                let content = fs::read(path)
-                    .map_err(|e| X402Error::General(format!("Failed to read file {}: {}", path, e)))?;
+                let content = fs::read(path).map_err(|e| {
+                    X402Error::General(format!("Failed to read file {}: {}", path, e))
+                })?;
                 Ok(Some(Body::from(content)))
             }
             Some(d) => Ok(Some(Body::from(d.clone()))),
@@ -77,16 +84,16 @@ impl RequestConfig {
             let name = parts[0];
             let value = parts[1];
 
-            if value.starts_with('@') {
+            if let Some(path) = value.strip_prefix('@') {
                 // File upload
-                let path = &value[1..];
                 let filename = std::path::Path::new(path)
                     .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("file")
                     .to_string();
-                let content = std::fs::read(path)
-                    .map_err(|e| X402Error::General(format!("Failed to read file {}: {}", path, e)))?;
+                let content = std::fs::read(path).map_err(|e| {
+                    X402Error::General(format!("Failed to read file {}: {}", path, e))
+                })?;
                 let part = Part::bytes(content).file_name(filename);
                 form = form.part(name.to_string(), part);
             } else {

@@ -26,9 +26,7 @@ fn test_help_flag() {
 #[test]
 fn test_version_flag() {
     let mut cmd = Command::cargo_bin("x402curl").unwrap();
-    cmd.arg("--version")
-        .assert()
-        .success();
+    cmd.arg("--version").assert().success();
 }
 
 #[test]
@@ -65,7 +63,10 @@ fn test_dry_run_no_key_required() {
 fn test_basic_get_request() {
     let mut cmd = Command::cargo_bin("x402curl").unwrap();
     cmd.arg("https://httpbin.org/get")
-        .env("X402_PRIVATE_KEY", "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
+        .env(
+            "X402_PRIVATE_KEY",
+            "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+        )
         .assert()
         .success()
         .stdout(predicate::str::contains("httpbin.org"));
@@ -74,18 +75,30 @@ fn test_basic_get_request() {
 #[test]
 fn test_post_with_data() {
     let mut cmd = Command::cargo_bin("x402curl").unwrap();
-    cmd.args(["-X", "POST", "-d", "{\"test\":1}", "https://httpbin.org/post"])
-        .env("X402_PRIVATE_KEY", "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("test"));
+    cmd.args([
+        "-X",
+        "POST",
+        "-d",
+        "{\"test\":1}",
+        "https://httpbin.org/post",
+    ])
+    .env(
+        "X402_PRIVATE_KEY",
+        "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+    )
+    .assert()
+    .success()
+    .stdout(predicate::str::contains("test"));
 }
 
 #[test]
 fn test_custom_header() {
     let mut cmd = Command::cargo_bin("x402curl").unwrap();
     cmd.args(["-H", "X-Custom: value", "https://httpbin.org/headers"])
-        .env("X402_PRIVATE_KEY", "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
+        .env(
+            "X402_PRIVATE_KEY",
+            "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+        )
         .assert()
         .success()
         .stdout(predicate::str::contains("X-Custom"));
@@ -95,7 +108,10 @@ fn test_custom_header() {
 fn test_fail_on_404() {
     let mut cmd = Command::cargo_bin("x402curl").unwrap();
     cmd.args(["-f", "https://httpbin.org/status/404"])
-        .env("X402_PRIVATE_KEY", "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
+        .env(
+            "X402_PRIVATE_KEY",
+            "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+        )
         .assert()
         .failure()
         .code(4);
