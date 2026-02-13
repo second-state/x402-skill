@@ -1,4 +1,4 @@
-# x402 Setup Guide
+# x402 SKILL Setup Guide
 
 Follow these steps to install the x402curl binary and configure a wallet so the x402 skill can handle payment-gated API requests.
 
@@ -6,10 +6,6 @@ Follow these steps to install the x402curl binary and configure a wallet so the 
 > Alternatives: `./.claude/skills`, `~/.openclaw/skills`, `./.openclaw/skills` — replace the prefix if using a different agent tool.
 
 ## Step 1: Install x402curl
-
-Choose **one** of the following options.
-
-### Option A: Download pre-built binary (recommended)
 
 Detect the platform and download the matching release:
 
@@ -46,61 +42,65 @@ Verify the installation:
 | macOS          | x86_64      | `x86_64-apple-darwin`          |
 | macOS          | arm64       | `aarch64-apple-darwin`         |
 
-### Option B: Build from source
-
-Requires a Rust toolchain (`cargo`).
-
-```bash
-cargo build --release
-mkdir -p ~/.claude/skills/x402/scripts
-cp target/release/x402curl ~/.claude/skills/x402/scripts/x402curl
-```
-
-Verify:
-
-```bash
-~/.claude/skills/x402/scripts/x402curl --version
-```
 
 ## Step 2: Set up a wallet
 
-x402curl needs a private key to sign payments. Choose **one** of the following options.
+x402curl needs a wallet or private key to sign payments. Choose **one** of the following options.
 
-### Option A: Generate with openssl (quickest)
+### Option A: Use an exisiting keystore wallet (Recommended)
 
-```bash
-KEY=$(openssl rand -hex 32)
-echo "X402_PRIVATE_KEY=${KEY}" >> .env
-```
-
-### Option B: Generate with cast (Foundry)
+Ask the user to give you his existing `wallet.json` file and its password. Save the `wallet.json` file to `~/.claude/skills/x402/`
 
 ```bash
-cast wallet new
-```
-
-Copy the private key from the output (without the `0x` prefix) and add to `.env`:
-
-```bash
-echo "X402_PRIVATE_KEY=<paste-key-here>" >> .env
-```
-
-### Option C: Use a keystore (Keystore v3 JSON)
-
-If you have an existing Ethereum keystore file:
-
-```bash
-echo "X402_WALLET=/path/to/keystore.json" >> .env
+echo "X402_WALLET=~/.claude/skills/x402/wallet.json" >> .env
 echo "X402_WALLET_PASSWORD=your-password" >> .env
 ```
 
-### Important notes on key format
+### Option B: Create a new wallet
 
-- The private key must be **64 hex characters** with **no `0x` prefix**.
+With the user permission, you can create a brand new wallet for yourself.
+
+```python
+pip install eth-account
+
+python3 -c "
+from eth_account import Account
+import json
+acct = Account.create()
+ks = Account.encrypt(acct.key, 'your-password')
+print('Address:', acct.address)
+with open('wallet.json', 'w') as f: json.dump(ks, f, indent=2)
+print('Saved to wallet.json')
+"
+```
+
+Move the generated `wallet.json` to the `~/.claude/skills/x402/` directory.
+
+```bash
+mv wallet.json ~/.claude/skills/x402/
+```
+
+Tell the x402curl how to find and open the wallet.
+
+```bash
+echo "X402_WALLET=~/.claude/skills/x402/wallet.json" >> .env
+echo "X402_WALLET_PASSWORD=your-password" >> .env
+```
+
+
+### Option C: You know the private key for the wallet
+
+The private key must be **64 hex characters** with **no `0x` prefix**. Let's say that the private key is `${KEY}`
+
+```bash
+echo "X402_PRIVATE_KEY=${KEY}" >> .env
+```
+
+### Important notes
+
 - x402curl resolves wallet credentials in this priority order:
   1. `--x402-key` CLI flag
-  2. `X402_PRIVATE_KEY` environment variable
-  3. `X402_PRIVATE_KEY` from `.env` file
+  2. `X402_PRIVATE_KEY` environment variable (including `.env`)
   4. `--x402-wallet` + `--x402-wallet-password` CLI flags
   5. `X402_WALLET` + `X402_WALLET_PASSWORD` env vars (including `.env`)
   6. `~/.x402/config` (TOML file)
@@ -124,7 +124,7 @@ The `--x402-dry-run` flag shows payment requirements (including your wallet addr
 ## Troubleshooting
 
 **"No wallet credentials found"**
-Ensure `.env` exists in the project root and contains `X402_PRIVATE_KEY=...` (64 hex chars, no `0x` prefix).
+Ensure `.env` exists in the project root and contains `X402_PRIVATE_KEY=...` or `X402_WALLET`
 
 **"Invalid private key"**
 The key must be exactly 64 hexadecimal characters. Remove any `0x` prefix or surrounding quotes.
@@ -136,4 +136,10 @@ Check that `X402_WALLET` in `.env` points to an existing file path and `X402_WAL
 Ensure `~/.claude/skills/x402/scripts/x402curl` exists and is executable (`chmod +x`).
 
 **Platform not supported**
-Pre-built binaries are available for Linux (x86_64, aarch64) and macOS (x86_64, arm64). For other platforms, build from source (Option B in Step 1).
+Pre-built binaries are available for Linux (x86_64, aarch64) and macOS (x86_64, arm64). For other platforms, build from source as follows.
+
+```
+git clone https://github.com/second-state/x402-skill
+cargo build --release
+mv target/release/x402curl ~/.claude/skills/x402/scripts/
+```
