@@ -21,5 +21,8 @@ __pycache__/
 # Rust
 target/
 
+# x402curl binary (built or downloaded into skills dir)
+skills/x402/scripts/x402curl
+
 # macOS
 .DS_Store
