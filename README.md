@@ -89,6 +89,11 @@ x402curl --x402-balance
 # Check balance on Base Sepolia testnet
 x402curl --x402-balance --x402-rpc-url https://sepolia.base.org
 
+# Check any ERC-20 token balance (decimals auto-detected)
+x402curl --x402-balance \
+  --x402-rpc-url https://eth.llamarpc.com \
+  --x402-token 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48
+
 # Preview payment requirements without paying
 x402curl --x402-dry-run -X POST https://api.example.com/endpoint
 
@@ -132,6 +137,7 @@ x402curl -v -X POST https://api.example.com/endpoint
 | `--x402-dry-run` | Show payment requirements without paying |
 | `--x402-balance` | Query wallet USDC balance |
 | `--x402-rpc-url` | Override RPC endpoint URL (default: Base mainnet) |
+| `--x402-token` | Override ERC-20 token contract address (decimals and symbol auto-detected) |
 | `--confirm` | Prompt before making payment |
 
 ### Exit codes

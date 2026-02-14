@@ -75,7 +75,7 @@ async fn run() -> Result<(), X402Error> {
     if args.x402_balance {
         let signer = config.require_signer()?;
         let rpc_url = balance::resolve_rpc(args.x402_rpc_url.as_deref());
-        return balance::query_usdc_balance(&signer, &rpc_url).await;
+        return balance::query_balance(&signer, &rpc_url, args.x402_token.as_deref()).await;
     }
 
     let req_config = RequestConfig::from_args(&args)?;

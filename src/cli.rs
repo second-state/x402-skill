@@ -80,6 +80,10 @@ pub struct Args {
     /// Override RPC endpoint URL (default: https://mainnet.base.org)
     #[arg(long = "x402-rpc-url")]
     pub x402_rpc_url: Option<String>,
+
+    /// Override ERC-20 token contract address (default: USDC on detected chain)
+    #[arg(long = "x402-token")]
+    pub x402_token: Option<String>,
 }
 
 impl Args {

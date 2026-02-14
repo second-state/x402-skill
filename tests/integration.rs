@@ -22,7 +22,8 @@ fn test_help_flag() {
         .stdout(predicate::str::contains("--x402-dry-run"))
         .stdout(predicate::str::contains("--x402-wallet"))
         .stdout(predicate::str::contains("--x402-balance"))
-        .stdout(predicate::str::contains("--x402-rpc-url"));
+        .stdout(predicate::str::contains("--x402-rpc-url"))
+        .stdout(predicate::str::contains("--x402-token"));
 }
 
 #[test]
@@ -246,4 +247,21 @@ fn test_url_still_required_without_balance() {
         .assert()
         .failure()
         .stderr(predicate::str::contains("required"));
+}
+
+#[test]
+fn test_balance_custom_token() {
+    // --x402-token with Base mainnet USDC address should work and auto-detect symbol
+    let mut cmd = Command::cargo_bin("x402curl").unwrap();
+    cmd.arg("--x402-balance")
+        .arg("--x402-token")
+        .arg("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913")
+        .arg("--x402-key")
+        .arg("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
+        .env_remove("X402_PRIVATE_KEY")
+        .env_remove("X402_WALLET")
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("Address:"))
+        .stderr(predicate::str::contains("Network:"));
 }

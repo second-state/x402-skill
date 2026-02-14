@@ -62,6 +62,24 @@ Map x402curl exit codes to user-friendly messages:
 | 5 | Config error | "Wallet configuration error. Follow `install.md` to fix your setup." |
 | 6 | RPC error | "Could not query wallet balance. The RPC endpoint may be unavailable. Try again or use `--x402-rpc-url` to specify a custom endpoint." |
 
+## Balance Check
+
+When a user asks to check their wallet balance:
+
+**Step 1:** Run with defaults (Base mainnet USDC):
+```bash
+scripts/x402curl --x402-balance
+```
+
+**Step 2:** Show the result to the user.
+
+**Step 3:** Ask: "Would you like to check a balance on a different network or token?"
+
+If yes, ask for the RPC URL and token contract address. Then run:
+```bash
+scripts/x402curl --x402-balance --x402-rpc-url <url> --x402-token <address>
+```
+
 ## Examples
 
 ### Simple GET
