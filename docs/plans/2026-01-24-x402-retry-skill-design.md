@@ -60,5 +60,6 @@ curl flags dropped: `-v`, `--verbose`, `-s`, `--silent`
 ## File Location
 
 ```
-skills/x402-retry/SKILL.md
+claude/skills/x402/SKILL.md
+openclaw/skills/x402/SKILL.md
 ```
