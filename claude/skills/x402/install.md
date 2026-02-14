@@ -61,7 +61,7 @@ x402curl needs a wallet or private key to sign payments. Choose **one** of the f
 Ask the user to give you his existing `wallet.json` file and its password. Save the `wallet.json` file to `~/.claude/skills/x402/`
 
 ```bash
-echo "X402_WALLET=~/.claude/skills/x402/wallet.json" >> .env
+echo "X402_WALLET=$HOME/.claude/skills/x402/wallet.json" >> .env
 echo "X402_WALLET_PASSWORD=your-password" >> .env
 ```
 
@@ -92,7 +92,7 @@ mv wallet.json ~/.claude/skills/x402/
 Tell the x402curl how to find and open the wallet.
 
 ```bash
-echo "X402_WALLET=~/.claude/skills/x402/wallet.json" >> .env
+echo "X402_WALLET=$HOME/.claude/skills/x402/wallet.json" >> .env
 echo "X402_WALLET_PASSWORD=your-password" >> .env
 ```
 
