@@ -24,7 +24,7 @@ httpx.AsyncClient.__init__ = _patched_httpx_init  # type: ignore[method-assign]
 app = FastAPI(
     title="x402 Echo Server",
     description="Minimal payment-gated echo endpoint for testing x402curl",
-    version="0.1.0",
+    version="0.2.0",
 )
 
 # Get wallet address from environment

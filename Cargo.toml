@@ -1,6 +1,6 @@
 [package]
 name = "x402curl"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 description = "curl with automatic x402 payment handling"
 license = "MIT"
@@ -31,4 +31,3 @@ tempfile = "3"
 strip = true
 lto = true
 codegen-units = 1
-
