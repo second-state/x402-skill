@@ -1,3 +1,4 @@
+mod balance;
 mod cli;
 mod config;
 mod error;
@@ -70,6 +71,13 @@ async fn run() -> Result<(), X402Error> {
         args.x402_wallet.as_deref(),
         args.x402_wallet_password.as_deref(),
     )?;
+
+    if args.x402_balance {
+        let signer = config.require_signer()?;
+        let rpc_url = balance::resolve_rpc(args.x402_rpc_url.as_deref());
+        return balance::query_balance(&signer, &rpc_url, args.x402_token.as_deref()).await;
+    }
+
     let req_config = RequestConfig::from_args(&args)?;
 
     let verbose = args.verbose || config.verbose;

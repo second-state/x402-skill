@@ -22,9 +22,14 @@ impl RequestConfig {
         let headers = Self::parse_headers(&args.headers)?;
         let body = Self::parse_body(&args.data, &args.data_binary)?;
 
+        let url = args
+            .url
+            .clone()
+            .ok_or_else(|| X402Error::General("URL is required".into()))?;
+
         Ok(RequestConfig {
             method,
-            url: args.url.clone(),
+            url,
             headers,
             body,
             follow_redirects: args.location,

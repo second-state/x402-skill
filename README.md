@@ -83,6 +83,17 @@ x402curl -X POST https://api.example.com/endpoint \
   -H "Content-Type: application/json" \
   -d '{"key": "value"}'
 
+# Check wallet USDC balance (default: Base mainnet)
+x402curl --x402-balance
+
+# Check balance on Base Sepolia testnet
+x402curl --x402-balance --x402-rpc-url https://sepolia.base.org
+
+# Check any ERC-20 token balance (decimals auto-detected)
+x402curl --x402-balance \
+  --x402-rpc-url https://eth.llamarpc.com \
+  --x402-token 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48
+
 # Preview payment requirements without paying
 x402curl --x402-dry-run -X POST https://api.example.com/endpoint
 
@@ -124,6 +135,9 @@ x402curl -v -X POST https://api.example.com/endpoint
 | `--x402-wallet` | Path to Keystore v3 wallet (JSON) file |
 | `--x402-wallet-password` | Password for the keystore wallet file |
 | `--x402-dry-run` | Show payment requirements without paying |
+| `--x402-balance` | Query wallet USDC balance |
+| `--x402-rpc-url` | Override RPC endpoint URL (default: Base mainnet) |
+| `--x402-token` | Override ERC-20 token contract address (decimals and symbol auto-detected) |
 | `--confirm` | Prompt before making payment |
 
 ### Exit codes
@@ -136,6 +150,7 @@ x402curl -v -X POST https://api.example.com/endpoint
 | 3 | Payment error (insufficient funds) |
 | 4 | HTTP error (4xx/5xx with `-f`) |
 | 5 | Configuration error (no key found) |
+| 6 | RPC error (balance query failed) |
 
 ## Echo Server
 
