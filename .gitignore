@@ -22,7 +22,8 @@ __pycache__/
 target/
 
 # x402curl binary (built or downloaded into skills dir)
-skills/x402/scripts/x402curl
+claude/skills/x402/scripts/x402curl
+openclaw/skills/x402/scripts/x402curl
 
 # macOS
 .DS_Store

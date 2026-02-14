@@ -187,7 +187,7 @@ A reactive Claude Code skill that automatically detects x402-compatible 402 resp
   - `X-Payment` header present, or
   - Response body contains `"x402Version"`
 
-The skill checks that `x402curl` is installed and `X402_PRIVATE_KEY` is configured, then transparently retries the failed request. See `skills/x402-retry/SKILL.md` for full details.
+The skill checks that `x402curl` is installed and `X402_PRIVATE_KEY` is configured, then transparently retries the failed request. See `claude/skills/x402/SKILL.md` (for Claude Code) or `openclaw/skills/x402/SKILL.md` (for OpenClaw) for full details.
 
 ## Running Tests
 
