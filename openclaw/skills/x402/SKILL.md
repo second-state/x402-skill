@@ -8,8 +8,6 @@ trigger: reactive
 
 When an HTTP request returns **402 Payment Required** with x402 payment info, automatically retry using `x402curl`.
 
-NOTE: If you are Claude Code, set `{baseDir}` as `.` -- the directory where this `SKILL.md` file is located in.
-
 ## Detection
 
 Only activate when **all** of the following are true:
