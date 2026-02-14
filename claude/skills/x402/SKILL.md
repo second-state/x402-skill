@@ -60,6 +60,7 @@ Map x402curl exit codes to user-friendly messages:
 | 3 | Insufficient funds | "Payment failed: insufficient funds. Your wallet needs USDC on Base network. Testnet: get funds from https://www.alchemy.com/faucets/base-sepolia — Mainnet: transfer USDC to your wallet on Base." |
 | 4 | HTTP error | "The server returned an error after payment. The API may have changed requirements or be temporarily unavailable." |
 | 5 | Config error | "Wallet configuration error. Follow `install.md` to fix your setup." |
+| 6 | RPC error | "Could not query wallet balance. The RPC endpoint may be unavailable. Try again or use `--x402-rpc-url` to specify a custom endpoint." |
 
 ## Examples
 

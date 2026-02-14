@@ -20,7 +20,9 @@ fn test_help_flag() {
         .success()
         .stdout(predicate::str::contains("x402curl"))
         .stdout(predicate::str::contains("--x402-dry-run"))
-        .stdout(predicate::str::contains("--x402-wallet"));
+        .stdout(predicate::str::contains("--x402-wallet"))
+        .stdout(predicate::str::contains("--x402-balance"))
+        .stdout(predicate::str::contains("--x402-rpc-url"));
 }
 
 #[test]
@@ -198,4 +200,50 @@ fn test_private_key_takes_priority_over_wallet() {
         .env_remove("X402_WALLET")
         .assert()
         .success();
+}
+
+// Balance command tests
+
+#[test]
+fn test_balance_no_url_required() {
+    // --x402-balance should work without providing a URL
+    let mut cmd = Command::cargo_bin("x402curl").unwrap();
+    cmd.arg("--x402-balance")
+        .arg("--x402-key")
+        .arg("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
+        .env_remove("X402_PRIVATE_KEY")
+        .env_remove("X402_WALLET")
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("USDC"))
+        .stderr(predicate::str::contains("Address:"));
+}
+
+#[test]
+fn test_balance_no_credentials() {
+    // --x402-balance without credentials should fail with exit code 5
+    // Use a temp dir as CWD so dotenvy::dotenv() won't find the project .env file
+    let tmp = tempfile::tempdir().unwrap();
+    let mut cmd = Command::cargo_bin("x402curl").unwrap();
+    cmd.arg("--x402-balance")
+        .current_dir(tmp.path())
+        .env_remove("X402_PRIVATE_KEY")
+        .env_remove("X402_WALLET")
+        .assert()
+        .failure()
+        .code(5)
+        .stderr(predicate::str::contains("No wallet credentials found"));
+}
+
+#[test]
+fn test_url_still_required_without_balance() {
+    // Without --x402-balance, URL should still be required
+    let mut cmd = Command::cargo_bin("x402curl").unwrap();
+    cmd.arg("--x402-key")
+        .arg("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
+        .env_remove("X402_PRIVATE_KEY")
+        .env_remove("X402_WALLET")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("required"));
 }

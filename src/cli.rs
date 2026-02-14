@@ -6,8 +6,8 @@ use clap::Parser;
 #[command(version)]
 pub struct Args {
     /// URL to request
-    #[arg(required = true)]
-    pub url: String,
+    #[arg(required_unless_present = "x402_balance")]
+    pub url: Option<String>,
 
     /// HTTP method (GET, POST, PUT, DELETE, etc.)
     #[arg(short = 'X', long = "request", default_value = "GET")]
@@ -72,6 +72,14 @@ pub struct Args {
     /// Prompt before making payment
     #[arg(long = "confirm")]
     pub confirm: bool,
+
+    /// Query wallet USDC balance on Base network
+    #[arg(long = "x402-balance")]
+    pub x402_balance: bool,
+
+    /// Override RPC endpoint URL (default: https://mainnet.base.org)
+    #[arg(long = "x402-rpc-url")]
+    pub x402_rpc_url: Option<String>,
 }
 
 impl Args {
