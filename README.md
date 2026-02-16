@@ -1,20 +1,20 @@
-# x402-skills
+# AI agent skills for accepting payments
 
-Monetize Claude Code skills with x402 micropayments. This project provides the tooling for skill creators to gate API endpoints behind automatic payments, and for users to pay for them seamlessly.
+Monetize AI agents with skills for x402 micropayments. This project provides the tooling for skill creators to gate API endpoints behind automatic payments, and for users to pay for them seamlessly.
 
 ## Components
 
 | Component | Language | Description |
 |-----------|----------|-------------|
 | **x402curl** | Rust | Drop-in `curl` replacement with automatic x402 payment handling |
-| **Echo Server** | Python | Demo FastAPI server with a payment-gated endpoint |
-| **x402-retry** | Skill | Claude Code skill that detects 402 responses and retries with x402curl |
+| **Echo Server** | Python | Demo FastAPI server with an x402 payment-gated endpoint |
+| **x402-retry** | Skill | AI agent skill that detects HTTP 402 responses and retries with x402curl |
 
 ## Architecture
 
 ```
 ┌─────────────────┐     ┌──────────────┐     ┌─────────────────┐
-│  Claude Code    │     │   x402curl   │     │  Paid API       │
+│  AI agent       │     │   x402curl   │     │  Paid API       │
 │  (runs skill)   │     │              │     │  (x402 gated)   │
 └────────┬────────┘     └──────┬───────┘     └────────┬────────┘
          │                     │                      │
