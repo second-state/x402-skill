@@ -2,6 +2,18 @@
 
 Monetize AI agents with skills for x402 micropayments. This project provides the tooling for skill creators to gate API endpoints behind automatic payments, and for users to pay for them seamlessly.
 
+## Quick start
+
+Copy and paste the following sentence to give your agent the ability to make payments, and purchase products or services on its own.
+
+For OpenClaw:
+
+> Read https://raw.githubusercontent.com/second-state/x402-skill/refs/heads/master/openclaw/skills/x402/install.md and follow the instructions to set up the skill to make payments to x402-gated web or agent services.
+
+For Claude Code:
+
+> Read https://raw.githubusercontent.com/second-state/x402-skill/refs/heads/master/claude/skills/x402/install.md and follow the instructions to set up the skill to make payments to x402-gated web or agent services.
+
 ## Components
 
 | Component | Language | Description |
