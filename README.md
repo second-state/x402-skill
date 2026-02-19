@@ -1,6 +1,6 @@
-# AI agent skills for accepting payments
+# AI agent skills for making payments
 
-Monetize AI agents with skills for x402 micropayments. This project provides the tooling for skill creators to gate API endpoints behind automatic payments, and for users to pay for them seamlessly.
+This project provides the tooling and agentic skill for AI agents to seamlessly pay for x402-gated services. If you are looking for the agentic skill to request and receive payments, checkout https://money.flows.network
 
 ## Quick start
 
