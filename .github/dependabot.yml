@@ -24,6 +24,11 @@ updates:
       rust-dependencies:
         patterns:
           - "*"
+    ignore:
+      # Pinned to 1.x to match the transitive dep used by x402-chain-eip155.
+      # Re-evaluate once upstream x402-rs upgrades to alloy 2.
+      - dependency-name: "alloy-signer-local"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "pip"
     directory: "/"
