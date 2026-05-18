@@ -848,9 +848,9 @@ dependencies = [
 
 [[package]]
 name = "assert_cmd"
-version = "2.2.1"
+version = "2.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39bae1d3fa576f7c6519514180a72559268dd7d1fe104070956cb687bc6673bd"
+checksum = "2aa3a22042e45de04255c7bf3626e239f450200fd0493c1e382263544b20aea6"
 dependencies = [
  "anstyle",
  "bstr",
@@ -5120,8 +5120,8 @@ dependencies = [
 
 [[package]]
 name = "x402-chain-eip155"
-version = "1.4.9"
-source = "git+https://github.com/x402-rs/x402-rs.git#19e7c696a1e22bf8a234005153a2240d82d6ea1f"
+version = "1.4.10"
+source = "git+https://github.com/x402-rs/x402-rs.git#980ad88cc2639fd165476212750d3786bfd1c600"
 dependencies = [
  "alloy-contract",
  "alloy-primitives",
@@ -5138,8 +5138,8 @@ dependencies = [
 
 [[package]]
 name = "x402-reqwest"
-version = "1.4.9"
-source = "git+https://github.com/x402-rs/x402-rs.git#19e7c696a1e22bf8a234005153a2240d82d6ea1f"
+version = "1.4.10"
+source = "git+https://github.com/x402-rs/x402-rs.git#980ad88cc2639fd165476212750d3786bfd1c600"
 dependencies = [
  "async-trait",
  "http",
@@ -5151,8 +5151,8 @@ dependencies = [
 
 [[package]]
 name = "x402-types"
-version = "1.4.9"
-source = "git+https://github.com/x402-rs/x402-rs.git#19e7c696a1e22bf8a234005153a2240d82d6ea1f"
+version = "1.4.10"
+source = "git+https://github.com/x402-rs/x402-rs.git#980ad88cc2639fd165476212750d3786bfd1c600"
 dependencies = [
  "alloy-primitives",
  "async-trait",
