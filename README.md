@@ -112,6 +112,9 @@ x402curl --x402-dry-run -X POST https://api.example.com/endpoint
 # Prompt for confirmation before paying
 x402curl --confirm -X POST https://api.example.com/endpoint
 
+# Refuse any single payment above 10000 atomic token units
+x402curl --x402-max-amount 10000 https://api.example.com/endpoint
+
 # File upload via multipart form
 x402curl -X POST https://api.example.com/upload -F "file=@document.pdf"
 
@@ -147,10 +150,19 @@ x402curl -v -X POST https://api.example.com/endpoint
 | `--x402-wallet` | Path to Keystore v3 wallet (JSON) file |
 | `--x402-wallet-password` | Password for the keystore wallet file |
 | `--x402-dry-run` | Show payment requirements without paying |
+| `--x402-max-amount` | Maximum payment amount in atomic token units for this request |
 | `--x402-balance` | Query wallet USDC balance |
 | `--x402-rpc-url` | Override RPC endpoint URL (default: Base mainnet) |
 | `--x402-token` | Override ERC-20 token contract address (decimals and symbol auto-detected) |
 | `--confirm` | Prompt before making payment |
+
+`--x402-max-amount` is a per-request raw threshold applied to each advertised
+payment option's integer amount. It is not a human-readable or fiat value, a
+cumulative budget, or a constraint on the asset, network, payee, or resource.
+For example, `10000` means `0.01 USDC` only for a six-decimal USDC asset. A
+challenge with no supported payment option at or below the threshold is
+rejected before signing and before any paid retry; this currently exits through
+the middleware error path with code 2.
 
 ### Exit codes
 
@@ -158,7 +170,7 @@ x402curl -v -X POST https://api.example.com/endpoint
 |------|---------|
 | 0 | Success |
 | 1 | General error (invalid args, config) |
-| 2 | Network error (connection failed) |
+| 2 | Network or x402 middleware error (including no acceptable payment option) |
 | 3 | Payment error (insufficient funds) |
 | 4 | HTTP error (4xx/5xx with `-f`) |
 | 5 | Configuration error (no key found) |
