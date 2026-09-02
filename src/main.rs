@@ -17,6 +17,7 @@ use std::sync::Arc;
 use x402_chain_eip155::v1_eip155_exact::client::V1Eip155ExactClient;
 use x402_chain_eip155::v2_eip155_exact::client::V2Eip155ExactClient;
 use x402_reqwest::{ReqwestWithPayments, ReqwestWithPaymentsBuild, X402Client};
+use x402_types::scheme::client::MaxAmount;
 
 fn prompt_confirmation(amount: &str, recipient: &str) -> Result<bool, X402Error> {
     eprint!(
@@ -66,6 +67,21 @@ async fn main() -> ExitCode {
 
 async fn run() -> Result<(), X402Error> {
     let args = Args::parse_args();
+    let max_amount = match args.x402_max_amount.as_deref() {
+        Some(value) if !value.is_empty() && value.bytes().all(|byte| byte.is_ascii_digit()) => {
+            Some(MaxAmount(value.parse().map_err(|_| {
+                X402Error::General(format!(
+                    "Invalid --x402-max-amount '{value}': expected non-negative decimal atomic units"
+                ))
+            })?))
+        }
+        Some(value) => {
+            return Err(X402Error::General(format!(
+                "Invalid --x402-max-amount '{value}': expected non-negative decimal atomic units"
+            )))
+        }
+        None => None,
+    };
     let config = Config::load(
         args.x402_key.as_deref(),
         args.x402_wallet.as_deref(),
@@ -136,7 +152,14 @@ async fn run() -> Result<(), X402Error> {
         client_builder.redirect(reqwest::redirect::Policy::none())
     };
 
-    let client: ClientWithMiddleware = client_builder.build()?.with_payments(x402_client).build();
+    let client: ClientWithMiddleware = if let Some(max_amount) = max_amount {
+        client_builder
+            .build()?
+            .with_payments(x402_client.with_selector(max_amount))
+            .build()
+    } else {
+        client_builder.build()?.with_payments(x402_client).build()
+    };
 
     // Build request
     let mut request = client.request(req_config.method, &req_config.url);

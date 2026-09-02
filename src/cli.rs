@@ -69,6 +69,14 @@ pub struct Args {
     #[arg(long = "x402-dry-run")]
     pub x402_dry_run: bool,
 
+    /// Maximum payment amount in the token's atomic units for this request
+    #[arg(
+        long = "x402-max-amount",
+        value_name = "ATOMIC_UNITS",
+        allow_negative_numbers = true
+    )]
+    pub x402_max_amount: Option<String>,
+
     /// Prompt before making payment
     #[arg(long = "confirm")]
     pub confirm: bool,
