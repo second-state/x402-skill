@@ -9,9 +9,12 @@ license = "MIT"
 clap = { version = "4", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-x402-types = { git = "https://github.com/x402-rs/x402-rs.git" }
-x402-chain-eip155 = { git = "https://github.com/x402-rs/x402-rs.git", features = ["client"] }
-x402-reqwest = { git = "https://github.com/x402-rs/x402-rs.git" }
+x402-types = "2.0"
+# `telemetry` is required alongside `client`: x402-chain-eip155 2.0.2 uses
+# `tracing` unconditionally in v2_eip155_upto/client.rs, but only depends on
+# it through the `telemetry` feature.
+x402-chain-eip155 = { version = "2.0", features = ["client", "telemetry"] }
+x402-reqwest = "2.0"
 reqwest = { version = "0.13", features = ["multipart", "json"] }
 reqwest-middleware = { version = "0.5", features = ["multipart"] }
 dotenvy = "0.15"
@@ -19,7 +22,7 @@ toml = "1.1"
 serde_json = "1"
 dirs = "6"
 thiserror = "2"
-alloy-signer-local = { version = "1", features = ["keystore"] }
+alloy-signer-local = { version = "2", features = ["keystore"] }
 
 [dev-dependencies]
 wiremock = "0.6"

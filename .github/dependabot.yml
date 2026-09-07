@@ -25,8 +25,8 @@ updates:
         patterns:
           - "*"
     ignore:
-      # Pinned to 1.x to match the transitive dep used by x402-chain-eip155.
-      # Re-evaluate once upstream x402-rs upgrades to alloy 2.
+      # Pinned to 2.x to match the transitive dep used by x402-chain-eip155.
+      # Re-evaluate once upstream x402-rs upgrades to the next alloy major.
       - dependency-name: "alloy-signer-local"
         update-types: ["version-update:semver-major"]
 
