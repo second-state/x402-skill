@@ -81,6 +81,12 @@ pub struct Args {
     #[arg(long = "confirm")]
     pub confirm: bool,
 
+    /// Program run after the amount pin and `--confirm`, before any signature.
+    /// JSON terms are written to its stdin. Exit 0 to pay. Any other exit
+    /// refuses. Unset means the loop signs as before.
+    #[arg(long = "x402-before-sign", value_name = "PROGRAM")]
+    pub x402_before_sign: Option<String>,
+
     /// Query wallet USDC balance on Base network
     #[arg(long = "x402-balance")]
     pub x402_balance: bool,
