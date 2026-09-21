@@ -170,7 +170,10 @@ that amount pin and after `--confirm`, and before any signature. JSON terms for
 the chosen accept are written to its stdin (`payTo`, `amount`, `asset`,
 `network`, `scheme`, `resource`, `url`). `resource` is the 402 resource when
 the challenge carries one. Exit 0 to pay. Any other exit refuses with code 2
-and nothing is signed. Leave the flag unset and the loop is unchanged.
+and nothing is signed. After exit 0, the signed accept must still match that
+`payTo`, `amount`, `asset`, and `network`. Another network with the same payee
+and amount is refused with code 2 and nothing is signed. `resource` is not part
+of that bind. Leave the flag unset and the loop is unchanged.
 
 The check is a `twzrd.payment_decision.v1` for this challenge. Issuance of that
 record is $0.001. Verifying it does not call `GET /v1/intel/trust`. Continue

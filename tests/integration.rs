@@ -347,6 +347,71 @@ async fn test_before_sign_allow_still_signs_the_same_accept() {
         .contains_key("payment-signature"));
 }
 
+#[tokio::test(flavor = "multi_thread")]
+async fn test_before_sign_refuses_a_different_network_with_the_same_payee_and_amount() {
+    let server = MockServer::start().await;
+    let seen = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
+    let challenge = serde_json::json!({
+        "x402Version": 2,
+        "resource": {
+            "url": format!("{}/requested-resource", server.uri()),
+            "mimeType": "application/json"
+        },
+        "accepts": [
+            {
+                "scheme": "exact",
+                "network": seen,
+                "amount": "1000",
+                "payTo": TEST_PAY_TO,
+                "asset": TEST_ASSET
+            },
+            {
+                "scheme": "exact",
+                "network": "eip155:84532",
+                "amount": "1000",
+                "payTo": TEST_PAY_TO,
+                "maxTimeoutSeconds": 300,
+                "asset": TEST_ASSET,
+                "extra": { "assetTransferMethod": "eip3009", "name": "USD Coin", "version": "2" }
+            }
+        ]
+    });
+    mount_v2_payment_required(&server, challenge).await;
+    let dir = tempfile::tempdir().unwrap();
+    let marker = dir.path().join("seen-network");
+    let program = dir.path().join("hook.sh");
+    std::fs::write(
+        &program,
+        format!(
+            "#!/bin/sh\npython3 -c 'import json,sys; print(json.load(sys.stdin)[\"network\"])' > '{}'\nexit 0\n",
+            marker.display()
+        ),
+    )
+    .unwrap();
+    std::fs::set_permissions(&program, std::fs::Permissions::from_mode(0o755)).unwrap();
+
+    Command::cargo_bin("x402curl")
+        .unwrap()
+        .args([
+            "--x402-before-sign",
+            program.to_str().unwrap(),
+            &format!("{}/requested-resource", server.uri()),
+        ])
+        .env("X402_PRIVATE_KEY", TEST_PRIVATE_KEY)
+        .env_remove("X402_WALLET")
+        .env_remove("X402_WALLET_PASSWORD")
+        .assert()
+        .failure()
+        .code(2);
+
+    assert_eq!(std::fs::read_to_string(&marker).unwrap().trim(), seen);
+    let requests = server.received_requests().await.unwrap();
+    assert!(requests.len() >= 1);
+    assert!(requests
+        .iter()
+        .all(|request| !request.headers.contains_key("payment-signature")));
+}
+
 #[test]
 fn test_version_flag() {
     let mut cmd = Command::cargo_bin("x402curl").unwrap();

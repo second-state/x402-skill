@@ -18,12 +18,21 @@ use std::sync::Arc;
 use x402_chain_eip155::v1_eip155_exact::client::V1Eip155ExactClient;
 use x402_chain_eip155::v2_eip155_exact::client::V2Eip155ExactClient;
 use x402_reqwest::{ReqwestWithPayments, ReqwestWithPaymentsBuild, X402Client};
+use x402_types::chain::ChainId;
 use x402_types::scheme::client::{FirstMatch, MaxAmount, PaymentCandidate, PaymentSelector};
 
 /// Keeps the amount pin, then requires the accept the before-sign program saw.
 struct BeforeSignGate<S> {
     inner: S,
     approved: ApprovedPayment,
+}
+
+fn same_seen_network(candidate: &ChainId, seen: &str) -> bool {
+    if candidate.to_string() == seen {
+        return true;
+    }
+    // V1 challenges name the chain ("base-sepolia"). The signer stores the CAIP-2 id.
+    ChainId::from_network_name(seen).as_ref() == Some(candidate)
 }
 
 impl<S: PaymentSelector> PaymentSelector for BeforeSignGate<S> {
@@ -33,7 +42,8 @@ impl<S: PaymentSelector> PaymentSelector for BeforeSignGate<S> {
         let same_amount = chosen.amount == self.approved.amount.0;
         let same_asset = self.approved.asset.is_empty()
             || chosen.asset.eq_ignore_ascii_case(&self.approved.asset);
-        if same_payee && same_amount && same_asset {
+        let same_network = same_seen_network(&chosen.chain_id, &self.approved.network);
+        if same_payee && same_amount && same_asset && same_network {
             Some(chosen)
         } else {
             None

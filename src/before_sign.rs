@@ -28,6 +28,8 @@ pub struct ApprovedPayment {
     pub pay_to: String,
     pub amount: MaxAmount,
     pub asset: String,
+    /// Network string the program saw. The signer must use this chain.
+    pub network: String,
 }
 
 pub enum BeforeSignOutcome {
@@ -99,6 +101,7 @@ pub async fn evaluate_before_sign(
         pay_to: terms.pay_to,
         amount,
         asset: terms.asset,
+        network: terms.network,
     }))
 }
 
