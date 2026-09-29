@@ -155,6 +155,7 @@ x402curl -v -X POST https://api.example.com/endpoint
 | `--x402-rpc-url` | Override RPC endpoint URL (default: Base mainnet) |
 | `--x402-token` | Override ERC-20 token contract address (decimals and symbol auto-detected) |
 | `--confirm` | Prompt before making payment |
+| `--x402-before-sign` | Program run after the amount pin and `--confirm`, before any signature |
 
 `--x402-max-amount` is a per-request raw threshold applied to each advertised
 payment option's integer amount. It is not a human-readable or fiat value, a
@@ -163,6 +164,40 @@ For example, `10000` means `0.01 USDC` only for a six-decimal USDC asset. A
 challenge with no supported payment option at or below the threshold is
 rejected before signing and before any paid retry; this currently exits through
 the middleware error path with code 2.
+
+`--x402-before-sign PROGRAM` is off unless you set it. The program runs after
+that amount pin and after `--confirm`, and before any signature. JSON terms for
+the chosen accept are written to its stdin (`payTo`, `amount`, `asset`,
+`network`, `scheme`, `resource`, `url`). `resource` is the 402 resource when
+the challenge carries one. Exit 0 to pay. Any other exit refuses with code 2
+and nothing is signed. After exit 0, the signed accept must still match that
+`payTo`, `amount`, `asset`, and `network`. Another network with the same payee
+and amount is refused with code 2 and nothing is signed. `resource` is not part
+of that bind. Leave the flag unset and the loop is unchanged.
+
+The check is a `twzrd.payment_decision.v1` for this challenge. Issuance of that
+record is $0.001. Verifying it does not call `GET /v1/intel/trust`. Continue
+only on an unexpired `allow` or `warn`.
+
+```js
+import { verifyPaymentDecisionRecord } from 'twzrd-x402-gate/payment-decision' // @0.9.9
+
+const terms = JSON.parse(await new Response(process.stdin).text())
+// `record` is the $0.001 payment_decision for this challenge, already in hand.
+const verified = await verifyPaymentDecisionRecord(record, {
+  publicKeyPem: process.env.TWZRD_DECISION_PUBKEY,
+  challenge: {
+    payTo: terms.payTo,
+    amount: terms.amount,
+    resource: terms.resource,
+    network: terms.network,
+    scheme: terms.scheme,
+  },
+})
+if (!verified.ok || (verified.decision !== 'allow' && verified.decision !== 'warn')) {
+  process.exit(1)
+}
+```
 
 ### Exit codes
 

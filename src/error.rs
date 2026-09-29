@@ -24,6 +24,11 @@ pub enum X402Error {
 
     #[error("Configuration error: {0}")]
     Config(String),
+
+    /// Amount pin missed, or the before-sign program refused. Same exit as
+    /// the middleware's "no matching payment option" path. Nothing was signed.
+    #[error("{0}")]
+    BeforeSign(String),
 }
 
 impl X402Error {
@@ -36,6 +41,7 @@ impl X402Error {
             X402Error::Payment(_) => ExitCode::from(3),
             X402Error::Http(_) => ExitCode::from(4),
             X402Error::Config(_) => ExitCode::from(5),
+            X402Error::BeforeSign(_) => ExitCode::from(2),
         }
     }
 
@@ -48,6 +54,7 @@ impl X402Error {
             X402Error::Payment(_) => 3,
             X402Error::Http(_) => 4,
             X402Error::Config(_) => 5,
+            X402Error::BeforeSign(_) => 2,
         }
     }
 }

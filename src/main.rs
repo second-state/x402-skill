@@ -1,39 +1,62 @@
 mod balance;
+mod before_sign;
 mod cli;
 mod config;
 mod error;
 mod output;
 mod request;
 
+use before_sign::{evaluate_before_sign, ApprovedPayment, BeforeSignOutcome};
 use cli::Args;
 use config::Config;
 use error::X402Error;
 use output::handle_response;
 use request::RequestConfig;
 use reqwest_middleware::ClientWithMiddleware;
-use std::io::{self, Write};
 use std::process::ExitCode;
 use std::sync::Arc;
 use x402_chain_eip155::v1_eip155_exact::client::V1Eip155ExactClient;
 use x402_chain_eip155::v2_eip155_exact::client::V2Eip155ExactClient;
 use x402_reqwest::{ReqwestWithPayments, ReqwestWithPaymentsBuild, X402Client};
-use x402_types::scheme::client::MaxAmount;
+use x402_types::chain::ChainId;
+use x402_types::scheme::client::{FirstMatch, MaxAmount, PaymentCandidate, PaymentSelector};
 
-fn prompt_confirmation(amount: &str, recipient: &str) -> Result<bool, X402Error> {
-    eprint!(
-        "Payment required: {}\nRecipient: {}\nProceed? [y/N] ",
-        amount, recipient
-    );
-    io::stderr()
-        .flush()
-        .map_err(|e| X402Error::General(e.to_string()))?;
+/// Keeps the amount pin, then requires the accept the before-sign program saw.
+struct BeforeSignGate<S> {
+    inner: S,
+    approved: ApprovedPayment,
+}
 
-    let mut input = String::new();
-    io::stdin()
-        .read_line(&mut input)
-        .map_err(|e| X402Error::General(e.to_string()))?;
+fn same_seen_network(candidate: &ChainId, seen: &str) -> bool {
+    if candidate.to_string() == seen {
+        return true;
+    }
+    // V1 challenges name the chain ("base-sepolia"). The signer stores the CAIP-2 id.
+    ChainId::from_network_name(seen).as_ref() == Some(candidate)
+}
 
-    Ok(input.trim().eq_ignore_ascii_case("y") || input.trim().eq_ignore_ascii_case("yes"))
+impl<S: PaymentSelector> PaymentSelector for BeforeSignGate<S> {
+    fn select<'a>(&self, candidates: &'a [PaymentCandidate]) -> Option<&'a PaymentCandidate> {
+        let chosen = self.inner.select(candidates)?;
+        let same_payee = chosen.pay_to.eq_ignore_ascii_case(&self.approved.pay_to);
+        let same_amount = chosen.amount == self.approved.amount.0;
+        let same_asset = self.approved.asset.is_empty()
+            || chosen.asset.eq_ignore_ascii_case(&self.approved.asset);
+        let same_network = same_seen_network(&chosen.chain_id, &self.approved.network);
+        if same_payee && same_amount && same_asset && same_network {
+            Some(chosen)
+        } else {
+            None
+        }
+    }
+}
+
+struct RefuseAll;
+
+impl PaymentSelector for RefuseAll {
+    fn select<'a>(&self, _: &'a [PaymentCandidate]) -> Option<&'a PaymentCandidate> {
+        None
+    }
 }
 
 fn parse_payment_info(body: &str) -> (String, String) {
@@ -110,9 +133,35 @@ async fn run() -> Result<(), X402Error> {
         return dry_run(&req_config, verbose).await;
     }
 
-    // Confirmation mode: check if payment required and prompt user
-    if args.confirm || config.confirm {
-        // Pre-flight request to check if payment required
+    let want_confirm = args.confirm || config.confirm;
+    let gate = if let Some(program) = args.x402_before_sign.as_deref() {
+        if program.is_empty() {
+            return Err(X402Error::General(
+                "Invalid --x402-before-sign: expected a program".into(),
+            ));
+        }
+        Some(
+            evaluate_before_sign(
+                req_config.method.clone(),
+                &req_config.url,
+                req_config.headers.clone(),
+                program,
+                max_amount.as_ref().map(|max| MaxAmount(max.0)),
+                want_confirm,
+            )
+            .await?,
+        )
+    } else {
+        None
+    };
+
+    if matches!(gate, Some(BeforeSignOutcome::Cancelled)) {
+        eprintln!("Payment cancelled.");
+        return Ok(());
+    }
+
+    // Confirmation mode, unchanged when before-sign is unset.
+    if gate.is_none() && want_confirm {
         let preflight_client = reqwest::Client::new();
         let preflight_response = preflight_client
             .request(req_config.method.clone(), &req_config.url)
@@ -121,11 +170,10 @@ async fn run() -> Result<(), X402Error> {
             .await?;
 
         if preflight_response.status() == reqwest::StatusCode::PAYMENT_REQUIRED {
-            // Extract payment info and prompt
             let body = preflight_response.text().await.unwrap_or_default();
             let (amount, recipient) = parse_payment_info(&body);
 
-            if !prompt_confirmation(&amount, &recipient)? {
+            if !before_sign::prompt_confirmation(&amount, &recipient)? {
                 eprintln!("Payment cancelled.");
                 return Ok(());
             }
@@ -152,13 +200,41 @@ async fn run() -> Result<(), X402Error> {
         client_builder.redirect(reqwest::redirect::Policy::none())
     };
 
-    let client: ClientWithMiddleware = if let Some(max_amount) = max_amount {
-        client_builder
+    let client: ClientWithMiddleware = match gate {
+        Some(BeforeSignOutcome::NoPayment) => client_builder
             .build()?
-            .with_payments(x402_client.with_selector(max_amount))
-            .build()
-    } else {
-        client_builder.build()?.with_payments(x402_client).build()
+            .with_payments(x402_client.with_selector(RefuseAll))
+            .build(),
+        Some(BeforeSignOutcome::Approved(approved)) => {
+            if let Some(max_amount) = max_amount {
+                client_builder
+                    .build()?
+                    .with_payments(x402_client.with_selector(BeforeSignGate {
+                        inner: max_amount,
+                        approved,
+                    }))
+                    .build()
+            } else {
+                client_builder
+                    .build()?
+                    .with_payments(x402_client.with_selector(BeforeSignGate {
+                        inner: FirstMatch,
+                        approved,
+                    }))
+                    .build()
+            }
+        }
+        Some(BeforeSignOutcome::Cancelled) => unreachable!("cancel returns before the client"),
+        None => {
+            if let Some(max_amount) = max_amount {
+                client_builder
+                    .build()?
+                    .with_payments(x402_client.with_selector(max_amount))
+                    .build()
+            } else {
+                client_builder.build()?.with_payments(x402_client).build()
+            }
+        }
     };
 
     // Build request
